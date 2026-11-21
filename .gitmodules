@@ -1,0 +1,3 @@
+[submodule "submodules/floci-ui"]
+	path = submodules/floci-ui
+	url = https://github.com/floci-io/floci-ui

@@ -16,7 +16,7 @@ if ${PERSISTENCE}; then
 fi
 
 # Activate multicloud profile to deploy all services (AWS + Azure, GCP, OCI)
-if [[ "$RUN_ALL" == "true" ]]; then
+if ${RUN_ALL}; then
   COMPOSE_PROFILES=multicloud
 fi
 

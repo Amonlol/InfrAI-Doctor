@@ -1,0 +1,108 @@
+services:
+  floci:
+    image: floci/floci:2.5.0-compat
+    ports:
+      - "4566:4566"
+    volumes:
+      - ${FLOCI_CONTAINER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+      - ./.tmp/init/ready.d:/etc/floci/init/ready.d:ro
+      - ./.tmp/init/files:/etc/floci/init/files:ro
+    networks:
+      floci_default:
+        aliases:
+          - localhost.floci.io
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_floci/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  # Note:
+  # Floci-ui repo configures frontend and api as separate services for dev convenience
+  # This project uses official Docker Hub image which merges them into a single deployment
+  # thus making the second "service" block absolete
+  floci-ui:
+    image: floci/floci-ui:0.7.0
+    ports:
+      - "4500:4500"
+    depends_on:
+      - floci
+    networks:
+      - floci_default
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4500/api/clouds"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  # Multi-cloud emulators — enabled with the "multicloud" profile:
+  #   docker compose --profile multicloud up
+  floci-az:
+    image: floci/floci-az
+    profiles: ["multicloud"]
+    ports:
+      - "4577:4577"
+    networks:
+      - floci_default
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4577/_floci/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  floci-gcp:
+    image: floci/floci-gcp
+    profiles: ["multicloud"]
+    ports:
+      - "4588:4588"
+    volumes:
+      # Cloud SQL instances are real Postgres containers; see the note on `floci`.
+      - ${FLOCI_CONTAINER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+    networks:
+      - floci_default
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4588/_floci/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  floci-oci:
+    image: floci/floci-oci
+    profiles: ["multicloud"]
+    ports:
+      - "4599:4599"
+    networks:
+      - floci_default
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4599/_floci/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  floci-seed:
+    image: alpine/curl:8.22.0
+    profiles: ["multicloud"]
+    command: ["/bin/sh", "/etc/floci/init/seed-clouds.sh"]
+    volumes:
+      - ./.tmp/init:/etc/floci/init:ro
+    depends_on:
+      - floci-az
+      - floci-gcp
+    networks:
+      - floci_default
+    env_file:
+      - .env
+
+networks:
+  floci_default:
+    name: floci_default

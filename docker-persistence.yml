@@ -1,0 +1,7 @@
+services:
+  floci:
+    volumes:
+      - floci-data:/app/data
+
+volumes:
+  floci-data:

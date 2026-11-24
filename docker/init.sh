@@ -2,7 +2,7 @@
 
 # Startup
 
-# Commands: run start up stop prune down status up restart exec usage
+# Commands: up run start stop down destroy remove status up restart exec usage
 COMMAND=$1
 
 # Load and set env variables
@@ -22,34 +22,41 @@ fi
 
 usage() {
   echo -e "usage: ./init.sh <command> [args]\n"
-  echo -e "Currently supported commands:\n  run, start, up\tstart containers\n  stop\t\t\texit containters\n  prune, down\t\texit and clear containers\n  status, up\t\tshow compose status\n  restart\t\trestart containers\n  exec\t\t\texec terminal to container [args = service name]"
+  echo -e "Currently supported commands:
+    up, run, start           start containers
+    stop                    exit containters
+    down, destroy, remove   exit and clear containers
+    status, up              show compose status
+    restart                 restart containers
+    exec                    exec terminal to container [args = service name]
+    help, usage             show this menu"
 }
 
 # Start containters
-run() {
+up() {
   # Copy temp files from floci-ui
   mkdir -p .tmp/init
   cp -rt .tmp/init \
-    submodules/floci-ui/init/files \
-    submodules/floci-ui/init/ready.d \
-    submodules/floci-ui/init/seed-clouds.sh #/files submodules/floci-ui/init/seed-clouds.sh
+    ../submodules/floci-ui/init/files \
+    ../submodules/floci-ui/init/ready.d \
+    ../submodules/floci-ui/init/seed-clouds.sh
 
   # Start main services
-  docker compose up -d --wait # AWS only
+  docker compose up -d --wait
 }
 
-# Exit containers
+# Stop containers
 stop() {
   docker compose stop
 }
 
-# Exit and clear containers
-prune() {
+# Stop and clear containers
+down() {
   docker compose down
 }
 
 # Status
-status() {
+ps() {
   docker compose ps -a
 }
 
@@ -72,7 +79,7 @@ check_command() {
 
   case $command in
 
-    run | start | up | stop | prune | down | status | ps | restart)
+    up | run | start | stop | down | destroy | delete | status | ps | restart| help | usage)
       if [[ "$#" -gt 0 ]]; then
         echo "Too many arguments for '$COMMAND'!"
         exit 1
@@ -100,20 +107,20 @@ main() {
 
   case $COMMAND in
 
-    run | start | up)
-      run
+    up | run | start)
+      up
       ;;
 
     stop)
       stop
       ;;
 
-    prune | down)
-      prune
+    down | destroy | remove)
+      down
       ;;
 
     status | ps)
-      status
+      ps
       ;;
 
     restart)
@@ -123,6 +130,10 @@ main() {
     exec)
       shift 1
       compose_exec "$@"
+      ;;
+
+    help | usage)
+      usage
       ;;
 
     *)

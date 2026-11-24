@@ -34,7 +34,8 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4500/api/clouds"]
+      test:
+        ["CMD", "wget", "--spider", "-q", "http://localhost:4500/api/clouds"]
       interval: 3s
       timeout: 2s
       retries: 10
